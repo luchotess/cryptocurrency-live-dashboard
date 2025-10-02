@@ -51,15 +51,16 @@ The Crypto Live Dashboard consists of two main components:
 ```bash
 git clone <your-repo-url>
 cd crypto-live-dashboard
-
-# Setup environment
-cp .env.example .env
 ```
 
-### 2. Configure Environment
-Edit the `.env` file and set your Finnhub API token:
-```env
-FINNHUB_API_TOKEN=your_actual_token_here
+### 2. Configure Backend Environment
+```bash
+# Setup backend environment
+cd backend
+cp .env.example .env
+# Edit backend/.env and set your Finnhub API token:
+# FINNHUB_TOKEN=your_actual_token_here
+cd ..
 ```
 
 ### 3. Deploy Backend
@@ -163,11 +164,13 @@ docker push your-registry/crypto-dashboard-api
 git clone <your-repo>
 cd crypto-live-dashboard
 
-# Setup environment
+# Setup backend environment
+cd backend
 cp .env.example .env
-# Configure .env with production values
+# Configure backend/.env with production values
+cd ..
 
-# Deploy with Docker Compose
+# Deploy with Docker
 ./scripts/deploy-backend.sh
 ```
 
@@ -209,7 +212,9 @@ scp -r frontend/dist/* user@server:/var/www/html/
 ```env
 NODE_ENV=production
 PORT=3000
-FINNHUB_API_TOKEN=your_production_token
+FINNHUB_TOKEN=your_production_token
+FINNHUB_WS_URL=wss://ws.finnhub.io
+FINNHUB_EXCHANGE=BINANCE
 DATABASE_URL=sqlite:./data/quotes.sqlite
 
 # Optional: For PostgreSQL in production
@@ -224,10 +229,12 @@ VITE_WS_URL=wss://your-api-domain.com
 
 ## 🔧 Environment Variables
 
-### Backend (.env)
+### Backend (backend/.env)
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
-| `FINNHUB_API_TOKEN` | Finnhub API token | - | ✅ |
+| `FINNHUB_TOKEN` | Finnhub API token | - | ✅ |
+| `FINNHUB_WS_URL` | Finnhub WebSocket URL | `wss://ws.finnhub.io` | ❌ |
+| `FINNHUB_EXCHANGE` | Exchange for quotes | `BINANCE` | ❌ |
 | `NODE_ENV` | Environment | `development` | ❌ |
 | `PORT` | Server port | `3000` | ❌ |
 | `DATABASE_URL` | Database connection | `sqlite:./data/quotes.sqlite` | ❌ |
@@ -288,10 +295,10 @@ npm run lint          # Lint code
 lsof -i :3000
 
 # Check Docker logs
-docker-compose logs backend
+docker logs -f crypto-dashboard-api
 
-# Verify environment variables
-docker-compose config
+# Verify container is running
+docker ps | grep crypto-dashboard-api
 ```
 
 #### Frontend can't connect to backend
@@ -306,9 +313,9 @@ docker-compose config
 ls -la data/
 
 # Reset database (WARNING: loses all data)
-docker-compose down
+docker stop crypto-dashboard-api
 rm -rf data/
-docker-compose up -d
+./scripts/deploy-backend.sh
 ```
 
 #### Finnhub API issues
