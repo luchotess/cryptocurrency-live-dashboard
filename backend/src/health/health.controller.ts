@@ -1,10 +1,10 @@
 import { Controller, Get } from '@nestjs/common';
-import { 
-  HealthCheckService, 
-  HealthCheck, 
+import {
+  HealthCheckService,
+  HealthCheck,
   TypeOrmHealthIndicator,
   HealthCheckResult,
-  HealthIndicatorResult
+  HealthIndicatorResult,
 } from '@nestjs/terminus';
 import { FinnhubClient } from '../finnhub/finnhub-client.service';
 import { QuotesOrchestratorService } from '../stream/quotes-orchestrator.service';
@@ -22,9 +22,7 @@ export class HealthController {
   @HealthCheck()
   checkLiveness(): Promise<HealthCheckResult> {
     // Liveness check - just verify the app is running
-    return this.health.check([
-      () => ({ app: { status: 'up' } }),
-    ]);
+    return this.health.check([() => ({ app: { status: 'up' } })]);
   }
 
   @Get('ready')
@@ -41,7 +39,7 @@ export class HealthController {
   private checkFinnhubStatus(): HealthIndicatorResult {
     const status = this.finnhubClient.getStatus();
     const isHealthy = status === 'connected' || status === 'connecting';
-    
+
     return {
       finnhub: {
         status: isHealthy ? 'up' : 'down',
@@ -55,7 +53,7 @@ export class HealthController {
 
   private checkSystemStatus(): HealthIndicatorResult {
     const systemStatus = this.orchestrator.getSystemStatus();
-    
+
     return {
       system: {
         status: 'up',

@@ -7,12 +7,20 @@ import {
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
-import { OutboundMessage, QuoteTick, HourlyAvgSnapshot, StatusMessage } from '../shared/types';
+import {
+  OutboundMessage,
+  QuoteTick,
+  HourlyAvgSnapshot,
+  StatusMessage,
+} from '../shared/types';
 
 @WebSocketGateway({
   namespace: '/ws/quotes',
   cors: {
-    origin: process.env.NODE_ENV === 'development' ? ['http://localhost:5173', 'http://localhost:5174'] : false,
+    origin:
+      process.env.NODE_ENV === 'development'
+        ? ['http://localhost:5173', 'http://localhost:5174']
+        : false,
     credentials: true,
   },
 })
@@ -30,13 +38,13 @@ export class QuotesGateway
 
   handleConnection(client: Socket) {
     this.logger.log(`Client connected: ${client.id}`);
-    
+
     // Send initial status
     const statusMessage: OutboundMessage = {
       type: 'status',
       payload: { status: 'connected' },
     };
-    
+
     client.emit('message', statusMessage);
   }
 
@@ -52,7 +60,7 @@ export class QuotesGateway
       type: 'tick',
       payload: tick,
     };
-    
+
     this.server.emit('message', message);
   }
 
@@ -64,7 +72,7 @@ export class QuotesGateway
       type: 'avg',
       payload: average,
     };
-    
+
     this.server.emit('message', message);
   }
 
@@ -76,7 +84,7 @@ export class QuotesGateway
       type: 'status',
       payload: status,
     };
-    
+
     this.server.emit('message', message);
   }
 

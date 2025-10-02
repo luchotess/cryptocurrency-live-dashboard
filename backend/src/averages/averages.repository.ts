@@ -25,7 +25,11 @@ export class AveragesRepository {
   /**
    * Upsert last tick for a pair
    */
-  async upsertLastTick(pair: CryptoPair, price: number, ts: number): Promise<void> {
+  async upsertLastTick(
+    pair: CryptoPair,
+    price: number,
+    ts: number,
+  ): Promise<void> {
     try {
       // Try to update existing record first
       const result = await this.lastTickRepository.update(
@@ -34,9 +38,9 @@ export class AveragesRepository {
           price,
           ts,
           updatedAt: new Date(),
-        }
+        },
       );
-      
+
       // If no rows were affected, insert a new one
       if (result.affected === 0) {
         await this.lastTickRepository.insert({
@@ -54,7 +58,7 @@ export class AveragesRepository {
           price,
           ts,
           updatedAt: new Date(),
-        }
+        },
       );
     }
   }
@@ -86,9 +90,9 @@ export class AveragesRepository {
           tickCount: data.tickCount,
           lastTickPrice: data.lastTickPrice,
           updatedAt: new Date(),
-        }
+        },
       );
-      
+
       // If no rows were affected, insert a new one
       if (result.affected === 0) {
         await this.hourlyAverageRepository.insert({
@@ -109,7 +113,7 @@ export class AveragesRepository {
           tickCount: data.tickCount,
           lastTickPrice: data.lastTickPrice,
           updatedAt: new Date(),
-        }
+        },
       );
     }
   }
@@ -139,7 +143,7 @@ export class AveragesRepository {
   async getRecentHourlyAverages(hours: number = 24): Promise<HourlyAverage[]> {
     const from = new Date();
     from.setHours(from.getHours() - hours);
-    
+
     return this.hourlyAverageRepository.find({
       where: {
         hourStartUtc: Between(from, new Date()),

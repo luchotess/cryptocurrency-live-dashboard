@@ -1,7 +1,7 @@
 import { Controller, Get, Query, ValidationPipe } from '@nestjs/common';
 import { AveragesRepository } from './averages.repository';
-import { 
-  GetAveragesQueryDto, 
+import {
+  GetAveragesQueryDto,
   GetAveragesResponseDto,
   GetLastResponseDto,
   AveragePointDto,
@@ -18,12 +18,18 @@ export class AveragesController {
     const { pair, from, to } = query;
 
     // Default to last 24 hours if no range specified
-    const fromDate = from ? new Date(from) : new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const fromDate = from
+      ? new Date(from)
+      : new Date(Date.now() - 24 * 60 * 60 * 1000);
     const toDate = to ? new Date(to) : new Date();
 
-    const averages = await this.repository.getHourlyAverages(pair, fromDate, toDate);
+    const averages = await this.repository.getHourlyAverages(
+      pair,
+      fromDate,
+      toDate,
+    );
 
-    const points: AveragePointDto[] = averages.map(avg => ({
+    const points: AveragePointDto[] = averages.map((avg) => ({
       t: avg.hourStartUtc.toISOString(),
       avg: Number(avg.avgPrice),
       n: avg.tickCount,
@@ -38,9 +44,9 @@ export class AveragesController {
   @Get('last')
   async getLastTicks(): Promise<GetLastResponseDto> {
     const lastTicks = await this.repository.getAllLastTicks();
-    
+
     const response: GetLastResponseDto = {};
-    
+
     for (const tick of lastTicks) {
       response[tick.pair] = {
         price: Number(tick.price),

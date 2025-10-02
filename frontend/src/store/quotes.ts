@@ -41,7 +41,7 @@ const pairs: CryptoPair[] = ['ETHUSDC', 'ETHUSDT', 'ETHBTC'];
 
 export const useQuotesStore = create<QuotesState>()(
   devtools(
-    (set, get) => ({
+    (set) => ({
       status: 'disconnected',
       error: undefined,
       

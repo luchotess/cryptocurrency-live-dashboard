@@ -3,9 +3,11 @@ import type { CryptoPair, GetAveragesResponse, GetLastResponse } from '../types'
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000';
 
 class ApiError extends Error {
-  constructor(message: string, public status?: number) {
+  public status?: number;
+  constructor(message: string, status?: number) {
     super(message);
     this.name = 'ApiError';
+    this.status = status;
   }
 }
 
@@ -58,7 +60,7 @@ export const apiClient = {
   /**
    * Health check
    */
-  async healthCheck(): Promise<any> {
+  async healthCheck(): Promise<{ status: string }> {
     const response = await fetchWithError(`${API_BASE}/health/live`);
     return response.json();
   },

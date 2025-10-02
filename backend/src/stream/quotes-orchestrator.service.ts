@@ -16,11 +16,13 @@ export class QuotesOrchestratorService implements OnModuleInit {
 
   async onModuleInit() {
     this.logger.log('Initializing Quotes Orchestrator...');
-    
+
     // Listen to Finnhub client events
     this.finnhubClient.on('tick', (tick: QuoteTick) => this.handleTick(tick));
-    this.finnhubClient.on('status', (status: StatusMessage) => this.handleStatus(status));
-    
+    this.finnhubClient.on('status', (status: StatusMessage) =>
+      this.handleStatus(status),
+    );
+
     this.logger.log('Quotes Orchestrator initialized');
   }
 
@@ -28,26 +30,30 @@ export class QuotesOrchestratorService implements OnModuleInit {
     try {
       // Process tick through aggregator
       const hourlySnapshot = await this.aggregator.processTick(tick);
-      
+
       // Broadcast tick to WebSocket clients
       this.gateway.broadcastTick(tick);
-      
+
       // Broadcast updated hourly average
       this.gateway.broadcastAverage(hourlySnapshot);
-      
+
       // Log tick throughput occasionally
-      if (Math.random() < 0.001) { // ~0.1% of ticks
-        this.logger.debug(`Processed tick for ${tick.pair}: $${tick.price} (clients: ${this.gateway.getClientCount()})`);
+      if (Math.random() < 0.001) {
+        // ~0.1% of ticks
+        this.logger.debug(
+          `Processed tick for ${tick.pair}: $${tick.price} (clients: ${this.gateway.getClientCount()})`,
+        );
       }
-      
     } catch (error) {
       this.logger.error(`Failed to handle tick for ${tick.pair}`, error);
     }
   }
 
   private handleStatus(status: StatusMessage): void {
-    this.logger.log(`Finnhub status: ${status.status}${status.reason ? ` (${status.reason})` : ''}`);
-    
+    this.logger.log(
+      `Finnhub status: ${status.status}${status.reason ? ` (${status.reason})` : ''}`,
+    );
+
     // Forward status to WebSocket clients
     this.gateway.broadcastStatus(status);
   }

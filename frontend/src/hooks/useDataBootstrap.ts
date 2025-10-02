@@ -18,72 +18,63 @@ export const useDataBootstrap = (): UseDataBootstrapReturn => {
   const setHistoryData = useQuotesStore((state) => state.setHistoryData);
   const updateTick = useQuotesStore((state) => state.updateTick);
 
-  const fetchHistoricalData = async (pair: CryptoPair) => {
-    try {
-      // Fetch last 24 hours of data
-      const from = new Date();
-      from.setHours(from.getHours() - 24);
-
-      const response = await apiClient.getAverages(
-        pair,
-        from.toISOString(),
-        new Date().toISOString()
-      );
-
-      // Convert API response to chart data
-      const chartData: ChartDataPoint[] = response.points.map(point => ({
-        x: new Date(point.t).getTime(),
-        y: point.avg,
-        timestamp: point.t,
-      }));
-
-      setHistoryData(pair, chartData);
-    } catch (error) {
-      console.error(`Failed to fetch historical data for ${pair}:`, error);
-      // Don't throw - continue with other pairs
-    }
-  };
-
-  const fetchLastTicks = async () => {
-    try {
-      const response = await apiClient.getLastTicks();
-
-      // Update store with last known prices
-      Object.entries(response).forEach(([pairStr, data]) => {
-        const pair = pairStr as CryptoPair;
-        if (pairs.includes(pair)) {
-          // Simulate a tick to populate the store
-          updateTick({
-            pair,
-            price: data.price,
-            ts: data.ts,
-          });
-        }
-      });
-    } catch (error) {
-      console.error('Failed to fetch last ticks:', error);
-      // Don't throw - this is not critical
-    }
-  };
-
   const fetchAllData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
+    const fetchHistoricalData = async (pair: CryptoPair) => {
+      try {
+        const from = new Date();
+        from.setHours(from.getHours() - 24);
+
+        const response = await apiClient.getAverages(
+          pair,
+          from.toISOString(),
+          new Date().toISOString()
+        );
+
+        const chartData: ChartDataPoint[] = response.points.map(point => ({
+          x: new Date(point.t).getTime(),
+          y: point.avg,
+          timestamp: point.t,
+        }));
+
+        setHistoryData(pair, chartData);
+      } catch (error) {
+        console.warn(`Failed to fetch historical data for ${pair}:`, error);
+      }
+    };
+
+    const fetchLastTicks = async () => {
+      try {
+        const response = await apiClient.getLastTicks();
+
+        Object.entries(response).forEach(([pairStr, data]) => {
+          const pair = pairStr as CryptoPair;
+          if (pairs.includes(pair)) {
+            updateTick({
+              pair,
+              price: data.price,
+              ts: data.ts,
+            });
+          }
+        });
+      } catch (error) {
+        console.warn('Failed to fetch last ticks:', error);
+      }
+    };
+
     try {
-      // Fetch historical data for all pairs in parallel
       const historicalPromises = pairs.map(pair => fetchHistoricalData(pair));
       await Promise.all(historicalPromises);
 
-      // Fetch last ticks
       await fetchLastTicks();
 
       hasInitialized.current = true;
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load historical data';
       setError(errorMessage);
-      console.error('Data bootstrap failed:', error);
     } finally {
       setIsLoading(false);
     }
@@ -95,12 +86,10 @@ export const useDataBootstrap = (): UseDataBootstrapReturn => {
   }, [fetchAllData]);
 
   useEffect(() => {
-    // Fetch data on mount
     if (!hasInitialized.current) {
-      // Small delay to ensure store is initialized
       const timer = setTimeout(() => {
         fetchAllData();
-      }, 1000); // Slightly longer delay to let WebSocket connect
+      }, 1000);
 
       return () => clearTimeout(timer);
     }

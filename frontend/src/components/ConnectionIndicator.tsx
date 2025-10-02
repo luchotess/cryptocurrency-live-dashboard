@@ -44,7 +44,7 @@ const statusConfig: Record<ConnectionStatus, {
   },
 };
 
-export const ConnectionIndicator: React.FC<ConnectionIndicatorProps> = ({ className = '' }) => {
+const ConnectionIndicatorComponent: React.FC<ConnectionIndicatorProps> = ({ className = '' }) => {
   const { status, error } = useQuotesStore();
   const config = statusConfig[status];
   const IconComponent = config.icon;
@@ -76,3 +76,5 @@ export const ConnectionIndicator: React.FC<ConnectionIndicatorProps> = ({ classN
     </div>
   );
 };
+
+export const ConnectionIndicator = React.memo(ConnectionIndicatorComponent);

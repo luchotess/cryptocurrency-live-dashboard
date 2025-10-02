@@ -129,7 +129,6 @@ const LiveChartComponent: React.FC<LiveChartProps> = ({ pair, data, height = 200
   );
 };
 
-// Memoize with custom comparison to prevent unnecessary re-renders
 export const LiveChart = React.memo(LiveChartComponent, (prevProps, nextProps) => {
   return (
     prevProps.pair === nextProps.pair &&

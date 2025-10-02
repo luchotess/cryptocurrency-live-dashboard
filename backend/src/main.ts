@@ -10,13 +10,16 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: process.env.NODE_ENV === 'development' ? ['http://localhost:5173'] : false,
+    origin:
+      process.env.NODE_ENV === 'development'
+        ? ['http://localhost:5173']
+        : false,
     credentials: true,
   });
 
   const port = configService.get('PORT', 3000);
   await app.listen(port);
-  
+
   logger.log(`🚀 Application is running on: http://localhost:${port}`);
   logger.log(`📈 WebSocket endpoint: ws://localhost:${port}/ws/quotes`);
   logger.log(`🔍 Health check: http://localhost:${port}/health/live`);

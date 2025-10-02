@@ -28,79 +28,6 @@ export const useQuotesWS = (): UseQuotesWSReturn => {
   const baseReconnectDelay = 1000; // 1 second
   const maxReconnectDelay = 30000; // 30 seconds
 
-  const connect = useCallback(() => {
-    if (socketRef.current?.connected) {
-      return;
-    }
-
-    console.log('Connecting to WebSocket...');
-    setStatus('connecting');
-
-    const socket = io(`${WS_URL}/ws/quotes`, {
-      transports: ['websocket', 'polling'],
-      reconnection: false, // We handle reconnection manually
-    });
-
-    socket.on('connect', () => {
-      console.log('WebSocket connected');
-      setStatus('connected');
-      reconnectAttemptsRef.current = 0;
-
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.current = null;
-      }
-    });
-
-    socket.on('disconnect', (reason) => {
-      console.log('WebSocket disconnected:', reason);
-      setStatus('disconnected', reason);
-      scheduleReconnect();
-    });
-
-    socket.on('connect_error', (error) => {
-      console.error('WebSocket connection error:', error);
-      setStatus('error', error.message);
-      scheduleReconnect();
-    });
-
-    socket.on('message', (message: OutboundMessage) => {
-      try {
-        handleMessage(message);
-      } catch (error) {
-        console.error('Error handling WebSocket message:', error);
-      }
-    });
-
-    socketRef.current = socket;
-  }, [setStatus]);
-
-  const scheduleReconnect = useCallback(() => {
-    if (reconnectTimeoutRef.current) return;
-
-    if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
-      console.error('Max reconnection attempts reached');
-      setStatus('error', 'Max reconnection attempts reached');
-      return;
-    }
-
-    const delay = Math.min(
-      maxReconnectDelay,
-      baseReconnectDelay * Math.pow(2, reconnectAttemptsRef.current)
-    );
-
-    // Add jitter
-    const jitteredDelay = delay + Math.random() * delay * 0.1;
-
-    console.log(`Scheduling reconnect in ${Math.round(jitteredDelay)}ms (attempt ${reconnectAttemptsRef.current + 1}/${maxReconnectAttempts})`);
-
-    reconnectAttemptsRef.current++;
-    reconnectTimeoutRef.current = setTimeout(() => {
-      reconnectTimeoutRef.current = null;
-      connect();
-    }, jitteredDelay);
-  }, [connect, setStatus]);
-
   const handleMessage = useCallback((message: OutboundMessage) => {
     switch (message.type) {
       case 'tick': {
@@ -119,9 +46,75 @@ export const useQuotesWS = (): UseQuotesWSReturn => {
         break;
       }
       default:
-        console.warn('Unknown message type:', message);
+        break;
     }
   }, [updateTick, updateAverage, setStatus]);
+
+  const connect = useCallback(() => {
+    if (socketRef.current?.connected) {
+      return;
+    }
+
+    setStatus('connecting');
+
+    const socket = io(`${WS_URL}/ws/quotes`, {
+      transports: ['websocket', 'polling'],
+      reconnection: false, // We handle reconnection manually
+    });
+
+    const scheduleReconnect = () => {
+      if (reconnectTimeoutRef.current) return;
+
+      if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
+        setStatus('error', 'Max reconnection attempts reached');
+        return;
+      }
+
+      const delay = Math.min(
+        maxReconnectDelay,
+        baseReconnectDelay * Math.pow(2, reconnectAttemptsRef.current)
+      );
+
+      // Add jitter
+      const jitteredDelay = delay + Math.random() * delay * 0.1;
+
+      reconnectAttemptsRef.current++;
+      reconnectTimeoutRef.current = setTimeout(() => {
+        reconnectTimeoutRef.current = null;
+        connect();
+      }, jitteredDelay);
+    };
+
+    socket.on('connect', () => {
+      setStatus('connected');
+      reconnectAttemptsRef.current = 0;
+
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+    });
+
+    socket.on('disconnect', (reason) => {
+      setStatus('disconnected', reason);
+      scheduleReconnect();
+    });
+
+    socket.on('connect_error', (error) => {
+      setStatus('error', error.message);
+      scheduleReconnect();
+    });
+
+    socket.on('message', (message: OutboundMessage) => {
+      try {
+        handleMessage(message);
+      } catch (error) {
+        setStatus('error', error instanceof Error ? error.message : 'Message handling error');
+      }
+    });
+
+    socketRef.current = socket;
+  }, [setStatus, handleMessage]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {

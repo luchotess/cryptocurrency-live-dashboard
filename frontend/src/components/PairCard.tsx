@@ -11,7 +11,7 @@ interface PairCardProps {
 
 const EMPTY: [] = [];
 
-export const PairCard: React.FC<PairCardProps> = ({ pair }) => {
+const PairCardComponent: React.FC<PairCardProps> = ({ pair }) => {
   const pairConfig = PAIR_CONFIGS[pair];
 
   // State for price change animations
@@ -162,3 +162,5 @@ export const PairCard: React.FC<PairCardProps> = ({ pair }) => {
     </div>
   );
 };
+
+export const PairCard = React.memo(PairCardComponent);

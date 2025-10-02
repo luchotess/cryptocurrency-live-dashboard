@@ -1,21 +1,19 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ConnectionIndicator } from './ConnectionIndicator';
 import { PairCard } from './PairCard';
 import { useQuotesWS } from '../hooks/useQuotesWS';
 import { useDataBootstrap } from '../hooks/useDataBootstrap';
 import type { CryptoPair } from '../types';
 
-const pairs: CryptoPair[] = ['ETHUSDC', 'ETHUSDT', 'ETHBTC'];
 
 export const Dashboard: React.FC = () => {
   const { isConnected, error, reconnect } = useQuotesWS();
   const { isLoading: isLoadingData, error: dataError, refetch } = useDataBootstrap();
 
-  const currentYear = new Date().getFullYear();
+  const pairs = useMemo<CryptoPair[]>(() => ['ETHUSDC', 'ETHUSDT', 'ETHBTC'], []);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
@@ -43,9 +41,7 @@ export const Dashboard: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Loading Banner */}
         {isLoadingData && (
           <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <div className="flex items-center space-x-3">
@@ -57,7 +53,6 @@ export const Dashboard: React.FC = () => {
           </div>
         )}
 
-        {/* Error Banner */}
         {(error || dataError) && (
           <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <div className="flex items-center justify-between">
@@ -82,17 +77,14 @@ export const Dashboard: React.FC = () => {
           </div>
         )}
 
-        {/* Pairs Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {pairs.map((pair) => (
             <PairCard key={pair} pair={pair} />
           ))}
         </div>
 
-        {/* Footer */}
         <footer className="mt-16 pt-8 border-t border-gray-200 dark:border-gray-700">
           <div className="text-center space-y-4">
-            {/* Technical Details */}
             <div className="text-sm text-gray-600 dark:text-gray-400">
               <p className="mb-2">
                 Real-time cryptocurrency data powered by{' '}
@@ -103,23 +95,18 @@ export const Dashboard: React.FC = () => {
               </p>
             </div>
 
-            {/* Technology Stack */}
             <div className="text-xs text-gray-500 dark:text-gray-500">
               <p>
                 Built with NestJS, React, TypeScript, WebSockets, and Tailwind CSS
               </p>
             </div>
 
-            {/* Developer Credit */}
             <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
               <p>
                 Developed by{' '}
                 <span className="font-semibold text-blue-600 dark:text-blue-400">
                   Luis Suarez
                 </span>
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                © {currentYear} Crypto Live Dashboard. All rights reserved.
               </p>
             </div>
           </div>

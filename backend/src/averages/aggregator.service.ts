@@ -1,9 +1,5 @@
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
-import { 
-  CryptoPair, 
-  QuoteTick, 
-  HourlyAvgSnapshot 
-} from '../shared/types';
+import { CryptoPair, QuoteTick, HourlyAvgSnapshot } from '../shared/types';
 import { AveragesRepository } from './averages.repository';
 
 interface HourAccumulator {
@@ -30,7 +26,7 @@ export class AggregatorService implements OnModuleDestroy {
     if (this.flushInterval) {
       clearInterval(this.flushInterval);
     }
-    
+
     // Flush all remaining data on shutdown
     await this.flushAllAccumulators();
   }
@@ -101,7 +97,7 @@ export class AggregatorService implements OnModuleDestroy {
    */
   getAllCurrentHourAverages(): HourlyAvgSnapshot[] {
     const snapshots: HourlyAvgSnapshot[] = [];
-    
+
     for (const [pair] of this.accumulators) {
       const snapshot = this.getCurrentHourAverage(pair);
       if (snapshot) {
@@ -135,7 +131,7 @@ export class AggregatorService implements OnModuleDestroy {
    */
   private async flushAllAccumulators(): Promise<void> {
     const toFlush = Array.from(this.accumulators.entries());
-    
+
     for (const [pair, acc] of toFlush) {
       if (acc.count > 0) {
         await this.flushAccumulator(pair, acc);
@@ -146,13 +142,16 @@ export class AggregatorService implements OnModuleDestroy {
   /**
    * Flush a single accumulator to database
    */
-  private async flushAccumulator(pair: CryptoPair, acc: HourAccumulator): Promise<void> {
+  private async flushAccumulator(
+    pair: CryptoPair,
+    acc: HourAccumulator,
+  ): Promise<void> {
     if (acc.count === 0) {
       return;
     }
 
     const avgPrice = acc.sum / acc.count;
-    
+
     try {
       await this.repository.upsertHourlyAverage({
         pair,
@@ -162,11 +161,12 @@ export class AggregatorService implements OnModuleDestroy {
         lastTickPrice: 0, // We'll update this separately
       });
 
-      this.logger.log(`Flushed ${acc.count} ticks for ${pair} at ${acc.hourStartUtc}, avg: ${avgPrice}`);
-      
+      this.logger.log(
+        `Flushed ${acc.count} ticks for ${pair} at ${acc.hourStartUtc}, avg: ${avgPrice}`,
+      );
+
       // Reset the accumulator
       this.accumulators.delete(pair);
-      
     } catch (error) {
       this.logger.error(`Failed to flush accumulator for ${pair}`, error);
     }

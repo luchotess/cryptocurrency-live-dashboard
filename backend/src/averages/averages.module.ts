@@ -7,9 +7,7 @@ import { AggregatorService } from './aggregator.service';
 import { AveragesController } from './averages.controller';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([LastTick, HourlyAverage]),
-  ],
+  imports: [TypeOrmModule.forFeature([LastTick, HourlyAverage])],
   providers: [AveragesRepository, AggregatorService],
   controllers: [AveragesController],
   exports: [AveragesRepository, AggregatorService],
